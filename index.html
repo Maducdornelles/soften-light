@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel de Ambiente Fotosensível</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0f0f0f;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      color: #ccc;
+    }
+    .painel {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      width: 100%;
+      max-width: 1000px;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      height: 300px;
+    }
+    .status {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.2rem;
+    }
+    .status span {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .alerta { color: #ff4f4f; }
+    .ok { color: #4cff73; }
+    .historico ul {
+      list-style: none;
+      padding: 0;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .historico li {
+      margin: 8px 0;
+      font-size: 1rem;
+    }
+    canvas {
+      height: 240px !important;
+    }
+  </style>
+</head>
+<body>
+  <h1>Painel de Ambiente Fotosensível</h1>
+  <div class="painel">
+    <div class="card status">
+      <div>STATUS ATUAL</div>
+      <span id="status">Aguardando...</span>
+    </div>
+    <div class="card">
+      <h3 style="text-align:center; margin-bottom:10px;">Evolução da Luminosidade</h3>
+      <canvas id="grafico"></canvas>
+    </div>
+    <div class="card historico">
+      <h3 style="text-align:center; margin-bottom:10px;">Histórico</h3>
+      <ul id="historico"></ul>
+    </div>
+  </div>
+
+  <script>
+    const ws = new WebSocket('ws://localhost:6789');
+    const statusEl = document.getElementById('status');
+    const historico = document.getElementById('historico');
+    const ctx = document.getElementById('grafico').getContext('2d');
+    const dados = [];
+    const labels = [];
+
+    const grafico = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Luminosidade',
+          data: dados,
+          borderColor: '#4cff73',
+          borderWidth: 2,
+          fill: false,
+          tension: 0.3
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            min: 20,
+            max: 100,
+            ticks: {
+              color: '#ccc'
+            }
+          },
+          x: {
+            ticks: {
+              color: '#ccc'
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            labels: {
+              color: '#ccc'
+            }
+          }
+        }
+      }
+    });
+
+    ws.onmessage = function(event) {
+      const dado = event.data;
+      const hora = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+      statusEl.textContent = dado;
+      statusEl.className = dado === 'ALERTA' ? 'alerta' : 'ok';
+
+      const li = document.createElement('li');
+      li.innerHTML = `<i class="fas fa-clock"></i> ${hora} <strong class="${dado === 'ALERTA' ? 'alerta' : 'ok'}">STATUS: ${dado}</strong>`;
+      historico.prepend(li);
+
+      // Adicionar valor ao gráfico
+      dados.push(dado === 'ALERTA' ? 90 + Math.random() * 10 : 40 + Math.random() * 20);
+      if (dados.length > 10) {
+        dados.shift();
+        labels.shift();
+      }
+      labels.push(hora);
+      grafico.update();
+    };
+  </script>
+</body>
+</html>
