@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Painel de Ambiente Fotosensível</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
   <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
   <style>
     * {
@@ -55,8 +55,12 @@
       font-weight: bold;
       margin-top: 10px;
     }
-    .alerta { color: #ff4f4f; }
-    .ok { color: #4cff73; }
+    .alerta {
+      color: #ff4f4f;
+    }
+    .ok {
+      color: #4cff73;
+    }
     .historico ul {
       list-style: none;
       padding: 0;
@@ -101,59 +105,76 @@
       type: 'line',
       data: {
         labels: labels,
-        datasets: [{
-          label: 'Luminosidade',
-          data: dados,
-          borderColor: '#4cff73',
-          borderWidth: 2,
-          fill: false,
-          tension: 0.3
-        }]
+        datasets: [
+          {
+            label: 'Luminosidade (0-1023)',
+            data: dados,
+            borderColor: '#4cff73',
+            borderWidth: 2,
+            fill: false,
+            tension: 0.3,
+          },
+        ],
       },
       options: {
+        animation: false,
         scales: {
           y: {
-            min: 20,
-            max: 100,
-            ticks: {
-              color: '#ccc'
-            }
+            min: 0,
+            max: 1023,
+            ticks: { color: '#ccc' },
           },
           x: {
-            ticks: {
-              color: '#ccc'
-            }
-          }
+            ticks: { color: '#ccc' },
+            title: {
+              display: true,
+              text: 'Leituras',
+              color: '#ccc',
+            },
+          },
         },
         plugins: {
           legend: {
-            labels: {
-              color: '#ccc'
-            }
-          }
-        }
-      }
+            labels: { color: '#ccc' },
+          },
+        },
+      },
     });
 
-    ws.onmessage = function(event) {
-      const dado = event.data;
-      const hora = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    ws.onmessage = function (event) {
+      const mensagem = event.data;
+      const partes = mensagem.split('|');
 
-      statusEl.textContent = dado;
-      statusEl.className = dado === 'ALERTA' ? 'alerta' : 'ok';
+      if (partes.length === 2) {
+        const status = partes[0]; // OK ou ALERTA
+        const valorLDR = parseInt(partes[1]);
 
-      const li = document.createElement('li');
-      li.innerHTML = `<i class="fas fa-clock"></i> ${hora} <strong class="${dado === 'ALERTA' ? 'alerta' : 'ok'}">STATUS: ${dado}</strong>`;
-      historico.prepend(li);
+        if (!isNaN(valorLDR)) {
+          // Atualizar Status Atual
+          statusEl.textContent = status;
+          statusEl.className = status.toLowerCase();
 
-      // Adicionar valor ao gráfico
-      dados.push(dado === 'ALERTA' ? 90 + Math.random() * 10 : 40 + Math.random() * 20);
-      if (dados.length > 10) {
-        dados.shift();
-        labels.shift();
+          // Atualizar Histórico com horário
+          const hora = new Date().toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          });
+          const li = document.createElement('li');
+          li.innerHTML = `<i class="fas fa-clock"></i> ${hora} <strong class="${status.toLowerCase()}">${status} - Luminosidade: ${valorLDR}</strong>`;
+          historico.prepend(li);
+
+          // Atualizar Gráfico com índice simples
+          dados.push(valorLDR);
+          labels.push(dados.length); // índice da leitura
+
+          if (dados.length > 20) {
+            dados.shift();
+            labels.shift();
+          }
+          grafico.update();
+        }
       }
-      labels.push(hora);
-      grafico.update();
     };
   </script>
 </body>

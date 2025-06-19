@@ -1,3 +1,4 @@
+
 const int pinoBotao = 6;
 const int pinoLDR = A0;
 const int pinoLedVerde = 7;
@@ -53,12 +54,14 @@ void loop() {
         digitalWrite(pinoLedVerde, LOW);
         digitalWrite(pinoLedVermelho, HIGH);
         digitalWrite(pinoBuzzer, HIGH);
-        Serial.println("ALERTA");
+        Serial.print("ALERTA|");
+        Serial.println(valorLDR);
       } else {
         digitalWrite(pinoLedVerde, HIGH);
         digitalWrite(pinoLedVermelho, LOW);
         digitalWrite(pinoBuzzer, LOW);
-        Serial.println("OK");
+        Serial.print("OK|");
+        Serial.println(valorLDR);
       }
     }
   }
