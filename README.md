@@ -49,7 +49,7 @@ git clone https://github.com/Maducdornelles/soften-light.git
 cd soften-light
 ```
 
-3. Abra a IDE do Arduino, carregue o código presente no arquivo `.ino` e faça o upload para o microcontrolador.
+3. Abra a IDE do Arduino, carregue o código presente no arquivo `.c` e faça o upload para o microcontrolador.
 
 4. Crie um ambiente virtual Python para o servidor:
 
